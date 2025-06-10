@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { Typography, Box, Alert, CircularProgress } from '@mui/material';
+import { Typography, Box, Alert, CircularProgress, Button, TextField } from '@mui/material';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 
 const SummaryPage = () => {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [emailInputs, setEmailInputs] = useState({}); // {meetingId: email}
+  const [emailStatus, setEmailStatus] = useState({}); // {meetingId: status}
 
   useEffect(() => {
     let isMounted = true;
@@ -63,6 +65,26 @@ const SummaryPage = () => {
     return () => { isMounted = false; };
   }, []);
 
+  const handleSendSummary = async (meetingId) => {
+    const email = emailInputs[meetingId];
+    setEmailStatus((prev) => ({ ...prev, [meetingId]: 'Sending...' }));
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/features/send-summary-email', {
+        meetingId,
+        email
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmailStatus((prev) => ({ ...prev, [meetingId]: res.data.message }));
+    } catch (err) {
+      setEmailStatus((prev) => ({
+        ...prev,
+        [meetingId]: err.response?.data?.message || 'Failed to send email.'
+      }));
+    }
+  };
+
   if (loading) return <Layout><CircularProgress /></Layout>;
   if (error) return <Layout><Alert severity="error">{error}</Alert></Layout>;
 
@@ -80,6 +102,23 @@ const SummaryPage = () => {
               {new Date(meeting.startTime).toLocaleString()}
             </Typography>
             <Typography sx={{ mt: 1, whiteSpace: 'pre-line' }}>{meeting.summary}</Typography>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                label="Email"
+                value={emailInputs[meeting._id] || ''}
+                onChange={e => setEmailInputs(inputs => ({ ...inputs, [meeting._id]: e.target.value }))}
+              />
+              <Button
+                variant="contained"
+                onClick={() => handleSendSummary(meeting._id)}
+              >
+                Send to Email
+              </Button>
+              {emailStatus[meeting._id] && (
+                <Typography variant="caption" color="primary">{emailStatus[meeting._id]}</Typography>
+              )}
+            </Box>
           </Box>
         ))}
       </Box>

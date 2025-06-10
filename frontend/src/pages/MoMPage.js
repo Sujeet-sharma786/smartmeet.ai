@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { Typography, Box, Alert, CircularProgress } from '@mui/material';
+import { Typography, Box, Alert, CircularProgress, Button, TextField } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const MoMPage = () => {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [emailInputs, setEmailInputs] = useState({});
+  const [emailStatus, setEmailStatus] = useState({});
 
   useEffect(() => {
     let isMounted = true;
@@ -80,6 +82,26 @@ const MoMPage = () => {
     return () => { isMounted = false; };
   }, []);
 
+  const handleSendMoM = async (meetingId) => {
+    const email = emailInputs[meetingId];
+    setEmailStatus((prev) => ({ ...prev, [meetingId]: 'Sending...' }));
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/features/send-mom-email', {
+        meetingId,
+        email
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmailStatus((prev) => ({ ...prev, [meetingId]: res.data.message }));
+    } catch (err) {
+      setEmailStatus((prev) => ({
+        ...prev,
+        [meetingId]: err.response?.data?.message || 'Failed to send email.'
+      }));
+    }
+  };
+
   if (loading) return <Layout><CircularProgress /></Layout>;
   if (error) return <Layout><Alert severity="error">{error}</Alert></Layout>;
 
@@ -97,6 +119,23 @@ const MoMPage = () => {
               {new Date(meeting.startTime).toLocaleString()}
             </Typography>
             <Typography sx={{ mt: 1, whiteSpace: 'pre-line' }}>{meeting.mom}</Typography>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                label="Email"
+                value={emailInputs[meeting._id] || ''}
+                onChange={e => setEmailInputs(inputs => ({ ...inputs, [meeting._id]: e.target.value }))}
+              />
+              <Button
+                variant="contained"
+                onClick={() => handleSendMoM(meeting._id)}
+              >
+                Send to Email
+              </Button>
+              {emailStatus[meeting._id] && (
+                <Typography variant="caption" color="primary">{emailStatus[meeting._id]}</Typography>
+              )}
+            </Box>
           </Box>
         ))}
       </Box>

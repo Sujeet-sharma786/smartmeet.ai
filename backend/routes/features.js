@@ -17,6 +17,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const axios = require('axios');
 
 const dotenv = require('dotenv').config();
+const nodemailer = require('nodemailer');
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -351,6 +352,77 @@ router.post('/recording', authenticate, upload.single('file'), async (req, res) 
   } catch (err) {
     console.error('Error in recording upload:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Utility: Validate email format
+function isValidEmail(email) {
+  // Simple regex for demonstration
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Send summary to email
+router.post('/send-summary-email', authenticate, async (req, res) => {
+  const { meetingId, email } = req.body;
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: 'Email not valid. Use another one.' });
+  }
+  try {
+    const summary = await Summary.findOne({ meeting: meetingId });
+    if (!summary) return res.status(404).json({ message: 'Summary not found.' });
+
+    // Configure nodemailer (use your SMTP details)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, // your email
+        pass: process.env.EMAIL_PASS  // your app password
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Meeting Summary',
+      text: summary.summaryText
+    });
+
+    res.json({ message: 'Summary sent to email.' });
+  } catch (err) {
+    console.error('Email send error:', err);
+    res.status(500).json({ message: 'Failed to send email.' });
+  }
+});
+
+// Send MoM to email
+router.post('/send-mom-email', authenticate, async (req, res) => {
+  const { meetingId, email } = req.body;
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: 'Email not valid. Use another one.' });
+  }
+  try {
+    const mom = await MoM.findOne({ meeting: meetingId });
+    if (!mom) return res.status(404).json({ message: 'MoM not found.' });
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Minutes of Meeting (MoM)',
+      text: mom.momText
+    });
+
+    res.json({ message: 'MoM sent to email.' });
+  } catch (err) {
+    console.error('Email send error:', err);
+    res.status(500).json({ message: 'Failed to send email.' });
   }
 });
 
