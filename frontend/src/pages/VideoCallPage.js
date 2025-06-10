@@ -180,7 +180,13 @@ const VideoCallPage = () => {
               autoPlay
               playsInline
               muted
-              style={{ width: '100%', height: '100%', borderRadius: 4, backgroundColor: '#000' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: 4,
+                backgroundColor: '#000',
+                transform: 'scaleX(-1)' // <-- Mirror the video
+              }}
             />
           )}
           <Typography sx={{ position: 'absolute', bottom: 8, left: 8, color: '#fff', backgroundColor: 'rgba(0,0,0,0.5)', px: 1, borderRadius: 1 }}>
@@ -199,7 +205,13 @@ const VideoCallPage = () => {
                 autoPlay
                 playsInline
                 muted={muted}
-                style={{ width: '100%', height: '100%', borderRadius: 4, filter: videoOff ? 'grayscale(100%)' : 'none' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: 4,
+                  filter: videoOff ? 'grayscale(100%)' : 'none',
+                  transform: 'scaleX(-1)' // <-- Mirror the video
+                }}
               />
               <Typography sx={{ position: 'absolute', bottom: 4, left: 4, color: '#fff', backgroundColor: 'rgba(0,0,0,0.5)', px: 0.5, borderRadius: 1, fontSize: 12 }}>
                 {username}
