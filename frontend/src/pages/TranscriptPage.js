@@ -13,6 +13,7 @@ const TranscriptPage = () => {
 
   useEffect(() => {
     console.log("TranscriptonPage meetingId: ",meetingId)
+    
     const fetchTranscription = async () => {
       setLoading(true);
       setError(null);

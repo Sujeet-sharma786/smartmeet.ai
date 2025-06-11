@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { TextField, Button, Typography, Box, Alert, Link } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const SignupPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,6 +61,12 @@ const SignupPage = () => {
             Signup
           </Button>
         </form>
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>
+          Already signed up?{' '}
+          <Link component="button" onClick={() => navigate('/login')}>
+            Login
+          </Link>
+        </Typography>
       </Box>
     </Layout>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { initializeWebRTC, startAssemblyAITranscription, startRecording as startRecordingUtil, stopRecording as stopRecordingUtil } from '../utils/videoCallUtils';
 import { Box, Button, IconButton, Typography } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -14,6 +14,7 @@ const VideoCallPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [meetingLink, setMeetingLink] = useState('');
+  const [meetingId, setMeetingId] = useState('');
   const [transcription, setTranscription] = useState('');
   const [speakers, setSpeakers] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -26,6 +27,8 @@ const VideoCallPage = () => {
   const videoRefs = useRef({}); // Map of video element refs keyed by stream id
   const recordingInterval = useRef(null);
   const [text, setText] = useState('');
+  const {meetingId: paramMeetingId} = useParams();
+  console.log('meeting id in video call page: ',paramMeetingId)
 
   const setVideoRef = useCallback((id) => (el) => {
     if (el) {
@@ -41,6 +44,23 @@ const VideoCallPage = () => {
       return;
     }
     setMeetingLink(room);
+
+    // Fetch all meetings and find the one with the matching meetingLink
+    const token = localStorage.getItem('token');
+    fetch('/api/meetings', {
+      headers: { Authorization: token ? `Bearer ${token}` : '' }
+    })
+      .then(res => res.json())
+      .then(data => {
+        // data.meetings is an array
+        const found = data.meetings.find(m => m.meetingLink === room);
+        if (found && found._id) {
+          setMeetingId(found._id);
+        } else {
+          alert('Meeting not found for this link');
+        }
+      })
+      .catch(() => alert('Failed to fetch meetings'));
 
     // Initialize WebRTC and transcription
     initializeWebRTC(room, addOrUpdateStream, setSpeakers);
@@ -121,8 +141,12 @@ const VideoCallPage = () => {
       .then(data => {
         console.log('Recording uploaded:', data.transcript);
         setText(data.transcript);
-        // Navigate to TranscriptPage and pass text as state
-        // navigate('/transcript', { state: { text: data.transcript } });
+        // After recording upload
+        if (meetingId) {
+          navigate(`/transcription/${meetingId}`);
+        } else {
+          alert('Meeting ID not found, cannot redirect to transcript.');
+        }
       })
       .catch(error => {
         console.error('Error uploading recording:', error);

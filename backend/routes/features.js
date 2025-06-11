@@ -291,7 +291,7 @@ router.post('/recording', authenticate, upload.single('file'), async (req, res) 
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir);
         }
-        const WhisperPath = `"C:\\Users\\svish\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\Scripts\\whisper.exe"`;
+        const WhisperPath = process.env.WHISPER_PATH || 'whisper';
         const command = `${WhisperPath} "${audioPath}" --model base --output_dir "${outputDir}" --language en --fp16 False`;
 
         exec(command, (error, stdout, stderr) => {

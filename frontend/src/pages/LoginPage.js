@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { TextField, Button, Typography, Box, Alert, Link } from '@mui/material';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -56,6 +56,12 @@ const LoginPage = () => {
             Login
           </Button>
         </form>
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>
+          New user?{' '}
+          <Link component="button" onClick={() => navigate('/signup')}>
+            Signup
+          </Link>
+        </Typography>
       </Box>
     </Layout>
   );
